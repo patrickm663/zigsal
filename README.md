@@ -46,6 +46,7 @@ Interested in more intermediate files? `-keep` can be used to compile the progra
 sisalc -keep -o foo foo.sis
 ```
 The above works in combination with optimisation flags. The resultant C code can be checked to see if e.g. `-no-bounds` did its job.
+
 ## Compiling foo.c using Zig
 This works pretty well, but what if we didn't want to use GCC?
 
@@ -115,10 +116,14 @@ gcc -O3 -march=native -ffast-math -flto=auto -fno-math-errno \
   -lm
 ```
 As the benchmark shows below, `zig cc` seems to outperform `gcc` when we turn the optimisers on (!?), likely owing to LLVM and some better optimisation under the hood. 
+
 ## Benchmark 
 We have a Sisal programme `dcf.sis` that calculates $V = CF \times D$, where $CF$ is a matrix of $n\times m$ 'cashflows' and $D$ is a vector of $m$ 'discount rates'. Since we don't have built-in matrix algebra, we write this by hand using loops. The programme accepts a value for $n$ and $m$. The values in the matrix are populated _during_ execution.
 
 Note that this is a toy problem to show the differences in run-time under different compilations. This may change depending on problem, but I have found a 'nerd-sniped' `zig cc` call to produce the fastest executables for Sisal programmes. YMMV.
+
+### A Note on Constant Folding
+Sisal's optimiser aggressively 'constant-folds' expressions whose values can be determined at compile time. A matrix populated with literal values (e.g. all 1s multiplied by all 2s) will have the entire computation folded away at compile time, producing unrealistically fast benchmark times. Matrix elements must be generated from expressions the compiler cannot statically resolve -- for example, using index-derived arithmetic like `i * j + 1` — to ensure the computation genuinely occurs at runtime and benchmark results are meaningful.
 
 ## Specs
 - CPU: 11th Gen Intel i5-11400H (12) @ 4.500GHz
