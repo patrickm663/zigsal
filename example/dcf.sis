@@ -16,7 +16,7 @@ function Main(num_policies: integer; num_months: integer returns RealVector)
       % 1. Generate the Discount Factor vector
       % NOW DEPENDENT ON INDEX 'i' TO DEFEAT CONSTANT FOLDING
       df_vector := for i in 1, num_months 
-                   returns array of double_real(i)% * 0.005d0 
+                   returns array of double_real(i) * 0.005d0 
                    end for;
 
       % 2. Process 1 Million Policies
