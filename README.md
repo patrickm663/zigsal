@@ -125,6 +125,8 @@ Note that this is a toy problem to show the differences in run-time under differ
 ### A Note on Constant Folding
 Sisal's optimiser aggressively 'constant-folds' expressions whose values can be determined at compile time. A matrix populated with literal values (e.g. all 1s multiplied by all 2s) will have the entire computation folded away at compile time, producing unrealistically fast benchmark times. Matrix elements must be generated from expressions the compiler cannot statically resolve -- for example, using index-derived arithmetic like `i * j + 1` — to ensure the computation genuinely occurs at runtime and benchmark results are meaningful.
 
+For instance `example/dcf_constant.sis` runs at ~150ms **single-threaded** using plain `sisalc` -- faster than any of the benchmarks below. To keep it fair, the dependency is introduced. This is very helpful _when_ you need it, but not for these benchmarks.
+
 ## Specs
 - CPU: 11th Gen Intel i5-11400H (12) @ 4.500GHz
 - Memory: 16GB RAM
