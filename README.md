@@ -37,6 +37,12 @@ We can take it one further and put `taskset` in front of the executable call to 
 ```bash
 echo "<my args>" | taskset -c 0-11 ./foo -w12
 ```
+The binary comes with more flags in addition to `-wX`. For instance, `-z` can be used to suppress output (as is used in the benchmarking below) and flags like `-gss`, `-cached` and `-strided` apply different scheduling algorithms to improve performance. 
+```bash
+echo "<my args>" | taskset -c 0-11 ./foo -w12 -z -gss
+```
+A full set can be viewed by calling `-usage`.
+
 Now, to extract the intermediate `foo.c` file, we can run:
 ```bash
 sisalc -C -forC foo.sis
@@ -125,7 +131,7 @@ Note that this is a toy problem to show the differences in run-time under differ
 ### A Note on Constant Folding
 Sisal's optimiser aggressively 'constant-folds' expressions whose values can be determined at compile time. A matrix populated with literal values (e.g. all 1s multiplied by all 2s) will have the entire computation folded away at compile time, producing unrealistically fast benchmark times. Matrix elements must be generated from expressions the compiler cannot statically resolve -- for example, using index-derived arithmetic like `i * j + 1` — to ensure the computation genuinely occurs at runtime and benchmark results are meaningful.
 
-For instance `example/dcf_constant.sis` runs at ~150ms **single-threaded** using plain `sisalc` -- faster than any of the benchmarks below. To keep it fair, the dependency is introduced. This is very helpful _when_ you need it, but not for these benchmarks.
+For instance `example/dcf_constant.sis` runs at ~4ms **single-threaded** using plain `sisalc` -- faster than any of the benchmarks below. To keep it fair, the dependency is introduced. This is very helpful _when_ you need it, but not for these benchmarks.
 
 ## Specs
 - CPU: 11th Gen Intel i5-11400H (12) @ 4.500GHz
@@ -136,26 +142,26 @@ For instance `example/dcf_constant.sis` runs at ~150ms **single-threaded** using
 - Zig: 0.12.0-dev.2644+42fcca49c
 - Sisal: 14.1.0
 
-### TL;DR
+### TL;DR (10 runs)
 | # | Compiler | Compile Flags | Execution | Wall Time | CPU% |
 |---|----------|--------------|-----------|-----------|------|
-| 1 | `sisalc` | *(default)* | single-threaded | 1.886s | 99% |
-| 2 | `sisalc` | *(default)* | `-w12` + `taskset` | 0.523s | 717% |
-| 3 | `sisalc` | `-no-bounds -aggvector -vector -p=12` | `-w12` + `taskset` | 0.418s | 628% |
-| 4 | `zig cc` | *(none)* | single-threaded | 24.322s | 99% |
-| 5 | `zig cc` | *(none)* | `-w12` + `taskset` | 4.609s | 1108% |
-| 6 | `zig cc` | `-O3` | single-threaded | 1.437s | 99% |
-| 7 | `zig cc` | `-O3` | `-w12` + `taskset` | 0.394s | 584% |
+| 1 | `sisalc` | *(default)* | single-threaded | 1.686s | 99% |
+| 2 | `sisalc` | *(default)* | `-w12` + `taskset` | 0.324s | 717% |
+| 3 | `sisalc` | `-no-bounds -aggvector -vector -p=12` | `-w12` + `taskset` | 0.181s | 628% |
+| 4 | `zig cc` | *(none)* | single-threaded | 24.602s | 99% |
+| 5 | `zig cc` | *(none)* | `-w12` + `taskset` | 4.628s | 1108% |
+| 6 | `zig cc` | `-O3` | single-threaded | 1.244s | 99% |
+| 7 | `zig cc` | `-O3` | `-w12` + `taskset` | 0.163s | 584% |
 | 8 | `zig cc` | `-O3 -march=native -ffast-math -flto=thin` + LLVM flags | single-threaded | 0.493s | 99% |
-| 9 | `zig cc` | `-O3 -march=native -ffast-math -flto=thin` + LLVM flags | `-w12` + `taskset` | 0.246s | 266% |
-| 10 | `gcc` | *(none)* | single-threaded | 2.484s | 99% |
-| 11 | `gcc` | *(none)* | `-w12` + `taskset` | 0.661s | 816% |
-| 12 | `gcc` | `-O3` | single-threaded | 1.542s | 99% |
-| 13 | `gcc` | `-O3` | `-w12` + `taskset` | 0.478s | 663% |
+| 9 | `zig cc` | `-O3 -march=native -ffast-math -flto=thin` + LLVM flags | `-w12` + `taskset` | 0.063s | 266% |
+| 10 | `gcc` | *(none)* | single-threaded | 2.267s | 99% |
+| 11 | `gcc` | *(none)* | `-w12` + `taskset` | 0.480s | 816% |
+| 12 | `gcc` | `-O3` | single-threaded | 1.383s | 99% |
+| 13 | `gcc` | `-O3` | `-w12` + `taskset` | 0.298s | 663% |
 | 14 | `gcc` | `-O3 -march=native -ffast-math -flto=auto` + loop flags | single-threaded | 1.433s | 99% |
-| 15 | `gcc` | `-O3 -march=native -ffast-math -flto=auto` + loop flags | `-w12` + `taskset` | 0.397s | 598% |
+| 15 | `gcc` | `-O3 -march=native -ffast-math -flto=auto` + loop flags | `-w12` + `taskset` | 0.187s | 598% |
 
-Overall, optimised `sisalc` compilation with multi-threading (a freebie by design) can get you pretty far. Compared to plain `zig cc` and `gcc`, it seems to apply some of its own optimisations. Zig with `-O3` takes it up a notch, but the whole set of flags make a difference in run-time, about 1.5x the fastest I could get with `sisalc`-only optimisation. `gcc` had a better 'unoptimised' run than `zig cc`, but worse than `sisalc`. 
+Overall, optimised `sisalc` compilation with multi-threading (a freebie by design) can get you pretty far. Compared to plain `zig cc` and `gcc`, it seems to apply some of its own optimisations. Zig with `-O3` takes it up a notch, but the whole set of flags make a difference in run-time, about 2.85x the fastest I could get with `sisalc`-only optimisation. `gcc` had a better 'unoptimised' run than `zig cc`, but worse than `sisalc`. 
 
-These numbers also depend on some environmental factors so they really just give a general idea. Overall, ~250ms is pretty decent on fairly large matrix-vector multiplication using for-loops!
+These numbers also depend on some environmental factors so they really just give a general idea. Overall, ~63ms is pretty decent on fairly large matrix-vector multiplication using for-loops!
 

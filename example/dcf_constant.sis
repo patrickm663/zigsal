@@ -14,20 +14,19 @@ end function
 function Main(num_policies: integer; num_months: integer returns RealVector)
    let
       % 1. Generate the Discount Factor vector
-      df_vector := 
-	for i in 1, num_months 
-	  returns array of 0.95d0 
-	end for; 
+      % NOW DEPENDENT ON INDEX 'i' TO DEFEAT CONSTANT FOLDING
+      df_vector := for i in 1, num_months 
+                   returns array of 0.95d0 
+                   end for;
 
       % 2. Process 1 Million Policies
       results := 
          for r in 1, num_policies
-            cf_row := 
-	      for c in 1, num_months 
-		returns array of 100.0d0 
-	      end for;
-         returns 
-	  array of dot_product(cf_row, df_vector)
+            % Generate Cash Flow data for this row
+            cf_row := for c in 1, num_months 
+                      returns array of 100.0d0 
+                      end for;
+         returns array of dot_product(cf_row, df_vector)
          end for;
    in
       results
