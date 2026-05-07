@@ -139,7 +139,7 @@ For instance `example/dcf_constant.sis` runs at ~4ms **single-threaded** using p
 - OS: Pop!\_OS 24.04 LTS x86\_64
 - Kernel: 6.18.7-76061807-generic
 - GCC: 13.3.0
-- Zig: 0.12.0-dev.2644+42fcca49c
+- Zig: 0.17.0-dev.261+3d1fb4fac
 - Sisal: 14.1.0
 
 ### TL;DR (10 runs)
